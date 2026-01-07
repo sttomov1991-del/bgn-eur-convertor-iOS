@@ -150,6 +150,85 @@
         <div class="rate-info">
             Курс: 1 EUR = 1.95583 BGN
         </div>
+
+        <!-- Separator -->
+        <div style="height: 1px; background: #718096; margin: 24px 0;"></div>
+
+        <!-- Change Calculator -->
+        <h2 style="color: white; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 16px;">
+            Калкулатор за ресто
+        </h2>
+
+        <div class="input-group">
+            <label>Цена на покупката</label>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="flex: 1;">
+                    <input 
+                        type="text" 
+                        inputmode="decimal"
+                        id="priceBGN" 
+                        placeholder="BGN"
+                        autocomplete="off"
+                        autocorrect="off"
+                        spellcheck="false"
+                        style="text-align: center;">
+                </div>
+                <span style="color: #cbd5e0; font-size: 12px; font-weight: 600;">или</span>
+                <div style="flex: 1;">
+                    <input 
+                        type="text" 
+                        inputmode="decimal"
+                        id="priceEUR" 
+                        placeholder="EUR"
+                        autocomplete="off"
+                        autocorrect="off"
+                        spellcheck="false"
+                        style="text-align: center;">
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Давам пари</label>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="flex: 1;">
+                    <input 
+                        type="text" 
+                        inputmode="decimal"
+                        id="givenBGN" 
+                        placeholder="BGN"
+                        autocomplete="off"
+                        autocorrect="off"
+                        spellcheck="false"
+                        style="text-align: center;">
+                </div>
+                <span style="color: #cbd5e0; font-size: 12px; font-weight: 600;">или</span>
+                <div style="flex: 1;">
+                    <input 
+                        type="text" 
+                        inputmode="decimal"
+                        id="givenEUR" 
+                        placeholder="EUR"
+                        autocomplete="off"
+                        autocorrect="off"
+                        spellcheck="false"
+                        style="text-align: center;">
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Ресто</label>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="flex: 1;">
+                    <div class="result" id="changeBGN" style="color: #fbbf24; text-align: center;">0.00</div>
+                </div>
+                <span style="color: #cbd5e0; font-size: 12px; font-weight: 600;">=</span>
+                <div style="flex: 1;">
+                    <div class="result" id="changeEUR" style="color: #fbbf24; text-align: center;">0.00</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -162,6 +241,16 @@
         const amountInput = document.getElementById('amountInput');
         const result = document.getElementById('result');
         const changeBtn = document.getElementById('changeBtn');
+        
+        // Change calculator elements
+        const priceBGN = document.getElementById('priceBGN');
+        const priceEUR = document.getElementById('priceEUR');
+        const givenBGN = document.getElementById('givenBGN');
+        const givenEUR = document.getElementById('givenEUR');
+        const changeBGN = document.getElementById('changeBGN');
+        const changeEUR = document.getElementById('changeEUR');
+        
+        let isUpdating = false;
 
         function toggleMode() {
             mode = mode === 'bgn-to-eur' ? 'eur-to-bgn' : 'bgn-to-eur';
@@ -208,6 +297,87 @@
         });
 
         amountInput.addEventListener('input', calculate);
+        
+        // Change calculator with dual currency
+        priceBGN.addEventListener('input', function() {
+            if (isUpdating) return;
+            isUpdating = true;
+            const value = parseFloat(priceBGN.value.replace(',', '.'));
+            if (!isNaN(value) && value >= 0) {
+                priceEUR.value = (value / RATE).toFixed(2);
+            } else {
+                priceEUR.value = '';
+            }
+            isUpdating = false;
+            calculateChange();
+        });
+
+        priceEUR.addEventListener('input', function() {
+            if (isUpdating) return;
+            isUpdating = true;
+            const value = parseFloat(priceEUR.value.replace(',', '.'));
+            if (!isNaN(value) && value >= 0) {
+                priceBGN.value = (value * RATE).toFixed(2);
+            } else {
+                priceBGN.value = '';
+            }
+            isUpdating = false;
+            calculateChange();
+        });
+
+        givenBGN.addEventListener('input', function() {
+            if (isUpdating) return;
+            isUpdating = true;
+            const value = parseFloat(givenBGN.value.replace(',', '.'));
+            if (!isNaN(value) && value >= 0) {
+                givenEUR.value = (value / RATE).toFixed(2);
+            } else {
+                givenEUR.value = '';
+            }
+            isUpdating = false;
+            calculateChange();
+        });
+
+        givenEUR.addEventListener('input', function() {
+            if (isUpdating) return;
+            isUpdating = true;
+            const value = parseFloat(givenEUR.value.replace(',', '.'));
+            if (!isNaN(value) && value >= 0) {
+                givenBGN.value = (value * RATE).toFixed(2);
+            } else {
+                givenBGN.value = '';
+            }
+            isUpdating = false;
+            calculateChange();
+        });
+
+        function calculateChange() {
+            const price = parseFloat(priceBGN.value.replace(',', '.'));
+            const given = parseFloat(givenBGN.value.replace(',', '.'));
+
+            if (isNaN(price) || isNaN(given) || price < 0 || given < 0 || priceBGN.value === '' || givenBGN.value === '') {
+                changeBGN.textContent = '0.00';
+                changeEUR.textContent = '0.00';
+                changeBGN.style.color = '#fbbf24';
+                changeEUR.style.color = '#fbbf24';
+                return;
+            }
+
+            const changeBGNValue = given - price;
+            const changeEURValue = changeBGNValue / RATE;
+            
+            if (changeBGNValue < 0) {
+                changeBGN.textContent = 'Недостатъчно!';
+                changeEUR.textContent = 'Недостатъчно!';
+                changeBGN.style.color = '#ef4444';
+                changeEUR.style.color = '#ef4444';
+            } else {
+                changeBGN.textContent = changeBGNValue.toFixed(2);
+                changeEUR.textContent = changeEURValue.toFixed(2);
+                changeBGN.style.color = '#4ade80';
+                changeEUR.style.color = '#4ade80';
+            }
+        }
         
         // Prevent zoom on iOS when focusing input
         document.addEventListener('touchstart', function() {}, {passive: true});
